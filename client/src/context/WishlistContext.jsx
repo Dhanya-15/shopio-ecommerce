@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
+import { toast } from '../toast.js';
 import { useAuth } from './AuthContext.jsx';
 
 const WishlistContext = createContext();
@@ -12,7 +13,6 @@ export function WishlistProvider({ children }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // load the wishlist whenever someone logs in; clear it on logout
   useEffect(() => {
     if (!user) { setItems([]); return; }
     setLoading(true);
@@ -24,17 +24,30 @@ export function WishlistProvider({ children }) {
 
   const has = (id) => items.some((p) => p._id === id);
 
-  // heart click: add if not saved, remove if saved (logged-out users are sent to log in)
+  // heart click: save if not saved, remove if saved
   const toggle = async (p) => {
-    if (!user) return navigate('/login');
+    if (!user) {
+      toast('Please log in to save items to your wishlist', 'info');
+      return navigate('/login');
+    }
     if (has(p._id)) {
       setItems((prev) => prev.filter((i) => i._id !== p._id));
-      try { await api(`/wishlist/${p._id}`, { method: 'DELETE' }); }
-      catch { setItems((prev) => [...prev, p]); }
+      try {
+        await api(`/wishlist/${p._id}`, { method: 'DELETE' });
+        toast(`${p.name} removed from wishlist`, 'info');
+      } catch (e) {
+        setItems((prev) => [...prev, p]);
+        toast(e.message || 'Could not update wishlist', 'error');
+      }
     } else {
       setItems((prev) => [...prev, p]);
-      try { await api(`/wishlist/${p._id}`, { method: 'POST' }); }
-      catch { setItems((prev) => prev.filter((i) => i._id !== p._id)); }
+      try {
+        await api(`/wishlist/${p._id}`, { method: 'POST' });
+        toast(`${p.name} added to wishlist`);
+      } catch (e) {
+        setItems((prev) => prev.filter((i) => i._id !== p._id));
+        toast(e.message || 'Could not update wishlist', 'error');
+      }
     }
   };
 

@@ -5,6 +5,9 @@ import { protect } from '../middleware/auth.js';
 
 const router = Router();
 
+const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+const SIZED_CATEGORIES = ['Shoes', 'Women']; // categories that need a size
+
 // Prices and stock come from the database, never from the client.
 router.post('/', protect, async (req, res, next) => {
   try {
@@ -13,12 +16,14 @@ router.post('/', protect, async (req, res, next) => {
 
     const lines = [];
     let total = 0;
-    for (const { product: id, qty } of items) {
+    for (const { product: id, qty, size } of items) {
       const p = await Product.findById(id);
       const q = parseInt(qty, 10);
       if (!p || !(q > 0)) return res.status(400).json({ message: 'Invalid item in cart' });
       if (p.countInStock < q) return res.status(400).json({ message: `Not enough stock for ${p.name}` });
-      lines.push({ product: p._id, name: p.name, price: p.price, qty: q });
+      const sized = SIZED_CATEGORIES.includes(p.category);
+      if (sized && !SIZES.includes(size)) return res.status(400).json({ message: `Please select a size for ${p.name}` });
+      lines.push({ product: p._id, name: p.name, price: p.price, qty: q, size: sized ? size : undefined });
       total += p.price * q;
     }
 

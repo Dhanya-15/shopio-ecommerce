@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { api, money } from '../api.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useCart } from '../context/CartContext.jsx';
-import './checkout.css';
 
 export default function Checkout() {
   const { user } = useAuth();
@@ -12,44 +11,24 @@ export default function Checkout() {
   const [form, setForm] = useState({ address: '', city: '', postalCode: '', country: '' });
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [placed, setPlaced] = useState(false);
 
-  if (!user) {
-    return (
-      <section className="checkout">
-        <div className="co-message">
-          <h1>Log in to check out</h1>
-          <p>You need an account to place an order.</p>
-          <Link to="/login" className="btn">Log in</Link>
-        </div>
-      </section>
-    );
-  }
-
-  if (items.length === 0) {
-    return (
-      <section className="checkout">
-        <div className="co-message">
-          <h1>Your cart is empty</h1>
-          <p>Add a few products before checking out.</p>
-          <Link to="/" className="btn">Continue shopping</Link>
-        </div>
-      </section>
-    );
-  }
+  if (!user) return <p>Please <Link to="/login">log in</Link> to check out.</p>;
+  if (items.length === 0 && !placed) return <p>Your cart is empty.</p>;
 
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
 
   const submit = async (e) => {
     e.preventDefault();
-    setError('');
     setBusy(true);
     try {
       await api('/orders', {
         method: 'POST',
-        body: { items: items.map(({ product, qty }) => ({ product, qty })), shippingAddress: form },
+        body: { items: items.map(({ product, qty, size }) => ({ product, qty, size })), shippingAddress: form },
       });
       clear();
-      navigate('/orders');
+      setPlaced(true);
+      setBusy(false);
     } catch (err) {
       setError(err.message);
       setBusy(false);
@@ -57,93 +36,28 @@ export default function Checkout() {
   };
 
   return (
-    <section className="checkout">
-      <header className="co-head">
-        <h1>Checkout</h1>
-        <Link to="/cart">Back to cart</Link>
-      </header>
+    <>
+      <form className="form" onSubmit={submit}>
+        <h1>Shipping</h1>
+        {error && <p className="error">{error}</p>}
+        <input required placeholder="Address" value={form.address} onChange={set('address')} />
+        <input required placeholder="City" value={form.city} onChange={set('city')} />
+        <input required placeholder="Postal code" value={form.postalCode} onChange={set('postalCode')} />
+        <input required placeholder="Country" value={form.country} onChange={set('country')} />
+        <p>Payment: pay on delivery</p>
+        <h2>Total: {money(total)}</h2>
+        <button disabled={busy}>{busy ? 'Placing order...' : 'Place order'}</button>
+      </form>
 
-      <div className="co-layout">
-        <form className="co-form" onSubmit={submit} id="checkout-form">
-          <h2>Shipping address</h2>
-
-          {error && <p className="error" role="alert">{error}</p>}
-
-          <div className="field">
-            <label htmlFor="address">Address</label>
-            <input
-              id="address"
-              required
-              autoComplete="street-address"
-              value={form.address}
-              onChange={set('address')}
-            />
+      {placed && (
+        <div className="modal-overlay">
+          <div className="modal" role="dialog" aria-modal="true">
+            <div className="modal-check">✓</div>
+            <p>Order placed successfully. To track the order, please check your registered email.</p>
+            <button className="btn" onClick={() => navigate('/orders')}>OK</button>
           </div>
-
-          <div className="row">
-            <div className="field">
-              <label htmlFor="city">City</label>
-              <input
-                id="city"
-                required
-                autoComplete="address-level2"
-                value={form.city}
-                onChange={set('city')}
-              />
-            </div>
-            <div className="field">
-              <label htmlFor="postalCode">Postal code</label>
-              <input
-                id="postalCode"
-                required
-                autoComplete="postal-code"
-                value={form.postalCode}
-                onChange={set('postalCode')}
-              />
-            </div>
-          </div>
-
-          <div className="field">
-            <label htmlFor="country">Country</label>
-            <input
-              id="country"
-              required
-              autoComplete="country-name"
-              value={form.country}
-              onChange={set('country')}
-            />
-          </div>
-
-          <h2 className="pay-title">Payment</h2>
-          <div className="pay">
-            <strong>Pay on delivery</strong>
-            <span>You pay when your order arrives. No payment details needed now.</span>
-          </div>
-        </form>
-
-        <aside className="co-summary">
-          <h2>Order summary</h2>
-          <ul>
-            {items.map((i) => (
-              <li key={i.product}>
-                <img src={i.image} alt="" />
-                <div className="co-item">
-                  <span className="co-name">{i.name}</span>
-                  <span className="co-qty">Qty {i.qty}</span>
-                </div>
-                <span>{money(i.price * i.qty)}</span>
-              </li>
-            ))}
-          </ul>
-          <div className="sum-row total">
-            <span>Total</span>
-            <span>{money(total)}</span>
-          </div>
-          <button type="submit" form="checkout-form" className="btn" disabled={busy}>
-            {busy ? 'Placing order...' : 'Place order'}
-          </button>
-        </aside>
-      </div>
-    </section>
+        </div>
+      )}
+    </>
   );
 }

@@ -1,7 +1,10 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { money } from '../api.js';
 import { useCart } from '../context/CartContext.jsx';
 import { useWishlist } from '../context/WishlistContext.jsx';
+import { SIZES, needsSize } from '../sizes.js';
+import Stars from './Stars.jsx';
 
 const Heart = ({ filled }) => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.8">
@@ -9,8 +12,64 @@ const Heart = ({ filled }) => (
   </svg>
 );
 
-export default function ProductCard({ p }) {
+// "Add to cart" button. For products that need a size, a small popup asks for the size first.
+export function AddButton({ p }) {
   const { add } = useCart();
+  const [picking, setPicking] = useState(false);
+  const [size, setSize] = useState('');
+  const [missing, setMissing] = useState(false);
+
+  if (p.countInStock === 0) return <button className="btn btn-sm" disabled>Out of stock</button>;
+
+  const click = () => {
+    if (!needsSize(p)) return add(p);
+    setSize('');
+    setMissing(false);
+    setPicking(true);
+  };
+
+  const confirm = () => {
+    if (!size) return setMissing(true);
+    add(p, 1, size);
+    setPicking(false);
+  };
+
+  return (
+    <>
+      <button className="btn btn-sm" onClick={click}>Add to cart</button>
+      {picking && (
+        <div className="modal-overlay" onClick={() => setPicking(false)}>
+          <div className="modal" role="dialog" aria-modal="true" aria-label="Select size" onClick={(e) => e.stopPropagation()}>
+            <h3>Select size</h3>
+            <p className="modal-sub">{p.name}</p>
+            <div className="sizes center">
+              {SIZES.map((s) => (
+                <button key={s} type="button" className={`size-btn ${size === s ? 'selected' : ''}`} aria-pressed={size === s} onClick={() => { setSize(s); setMissing(false); }}>{s}</button>
+              ))}
+            </div>
+            {missing && <p className="error">Please select a size</p>}
+            <div className="modal-actions">
+              <button className="btn" onClick={confirm}>Add to cart</button>
+              <button className="btn btn-light" onClick={() => setPicking(false)}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+export function Rating({ p }) {
+  if (!(p.rating > 0)) return null;
+  return (
+    <div className="rating">
+      <Stars value={p.rating} />
+      <span>{Number(p.rating).toFixed(1)} ({p.numReviews})</span>
+    </div>
+  );
+}
+
+export default function ProductCard({ p }) {
   const { has, toggle } = useWishlist();
   const liked = has(p._id);
 
@@ -28,10 +87,9 @@ export default function ProductCard({ p }) {
         </button>
       </div>
       <h3><Link to={`/product/${p._id}`}>{p.name}</Link></h3>
+      <Rating p={p} />
       <p className="price">{money(p.price)}</p>
-      <button className="btn btn-sm" disabled={p.countInStock === 0} onClick={() => add(p)}>
-        {p.countInStock === 0 ? 'Out of stock' : 'Add to cart'}
-      </button>
+      <AddButton p={p} />
     </div>
   );
 }

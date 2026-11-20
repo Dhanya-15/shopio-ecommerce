@@ -1,13 +1,12 @@
 import { Link } from 'react-router-dom';
 import { money } from '../api.js';
 import { useAuth } from '../context/AuthContext.jsx';
-import { useCart } from '../context/CartContext.jsx';
 import { useWishlist } from '../context/WishlistContext.jsx';
+import { AddButton, Rating } from '../components/ProductCard.jsx';
 
 export default function Wishlist() {
   const { user } = useAuth();
   const { items, toggle, loading } = useWishlist();
-  const { add } = useCart();
 
   if (!user) return <p>Please <Link to="/login">log in</Link> to see your wishlist.</p>;
 
@@ -28,10 +27,9 @@ export default function Wishlist() {
                 <Link to={`/product/${p._id}`}><img src={p.image} alt={p.name} /></Link>
               </div>
               <h3><Link to={`/product/${p._id}`}>{p.name}</Link></h3>
+              <Rating p={p} />
               <p className="price">{money(p.price)}</p>
-              <button className="btn btn-sm" disabled={p.countInStock === 0} onClick={() => add(p)}>
-                {p.countInStock === 0 ? 'Out of stock' : 'Add to cart'}
-              </button>
+              <AddButton p={p} />
               <button className="btn btn-sm btn-light" onClick={() => toggle(p)}>Remove</button>
             </div>
           ))}

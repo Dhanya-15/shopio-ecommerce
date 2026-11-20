@@ -11,6 +11,9 @@ const Icon = ({ d, children }) => (
   </svg>
 );
 
+// page sections in the order they appear on the home page
+const SECTIONS = ['home', 'categories', 'deals', 'trending', 'shop'];
+
 export default function Navbar() {
   const { user, logout } = useAuth();
   const { count } = useCart();
@@ -20,6 +23,7 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState('');
   const [menu, setMenu] = useState(false);
+  const [active, setActive] = useState('home');
   const menuRef = useRef(null);
 
   useEffect(() => {
@@ -28,6 +32,30 @@ export default function Navbar() {
     return () => document.removeEventListener('mousedown', close);
   }, []);
 
+  // highlight the menu item of the section the visitor is currently viewing
+  useEffect(() => {
+    if (pathname !== '/') { setActive(''); return undefined; }
+    const update = () => {
+      let current = 'home';
+      for (const id of SECTIONS) {
+        const el = document.getElementById(id);
+        if (el && el.getBoundingClientRect().top <= 160) current = id;
+      }
+      const atBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4;
+      if (atBottom && document.getElementById('shop')) current = 'shop';
+      setActive(current);
+    };
+    update();
+    const timer = setTimeout(update, 700); // again after the page content has loaded
+    window.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', update);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('scroll', update);
+      window.removeEventListener('resize', update);
+    };
+  }, [pathname]);
+
   const search = (e) => {
     e.preventDefault();
     navigate(q ? `/?q=${encodeURIComponent(q)}#shop` : '/#shop');
@@ -35,6 +63,7 @@ export default function Navbar() {
   };
 
   const goHome = () => { if (pathname === '/') window.scrollTo({ top: 0, behavior: 'smooth' }); };
+  const cls = (id) => (active === id ? 'active' : '');
 
   return (
     <header>
@@ -47,8 +76,9 @@ export default function Navbar() {
           </span>
           <span className="topbar-right">
             <Link to="/support">Help &amp; Support</Link>
-            <span>US</span>
-            <span>EN</span>
+            <Link to="/track">Track Order</Link>
+            <span>USD ⌄</span>
+            <span>EN ⌄</span>
           </span>
         </div>
       </div>
@@ -57,11 +87,21 @@ export default function Navbar() {
         <Link to="/" className="brand" onClick={goHome}>Shopio<span>.</span></Link>
 
         <nav className="menu">
-          <Link to="/" onClick={goHome}>Home</Link>
-          <HashLink id="shop">Shop</HashLink>
-          <HashLink id="categories">Categories</HashLink>
-          <HashLink id="deals">Deals</HashLink>
-          <HashLink id="trending">New Arrivals</HashLink>
+          <Link to="/" className={cls('home')} onClick={goHome}>Home</Link>
+          <HashLink id="shop" className={cls('shop')}>Shop</HashLink>
+          <HashLink id="categories" className={cls('categories')}>Categories</HashLink>
+          <HashLink id="deals" className={cls('deals')}>Deals</HashLink>
+          <HashLink id="trending" className={cls('trending')}>New Arrivals</HashLink>
+          <span className="dropdown">
+            <span>Pages ⌄</span>
+            <div className="dropdown-menu">
+              <Link to="/cart">Cart</Link>
+              <Link to="/wishlist">Wishlist</Link>
+              <Link to="/orders">My Orders</Link>
+              <Link to="/track">Track Order</Link>
+              <Link to="/support">Help &amp; Support</Link>
+            </div>
+          </span>
         </nav>
 
         <div className="icons">
@@ -84,6 +124,7 @@ export default function Navbar() {
                   <>
                     <div className="profile-name">Hi, {user.name}</div>
                     <Link to="/orders">Orders</Link>
+                    <Link to="/wishlist">Wishlist</Link>
                     <Link to="/support">Help &amp; Support</Link>
                     {user.isAdmin && <Link to="/admin">Admin</Link>}
                     <button className="menu-item" onClick={() => { logout(); navigate('/'); }}>Logout</button>
