@@ -12,7 +12,7 @@ const Heart = ({ filled }) => (
   </svg>
 );
 
-// "Add to cart" button. For products that need a size, a small popup asks for the size first.
+// This is "Add to cart" button. For products that need a size, a small popup asks for the size first.
 export function AddButton({ p }) {
   const { add } = useCart();
   const [picking, setPicking] = useState(false);
