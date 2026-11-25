@@ -13,11 +13,29 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.use('/api/uploads', express.static(uploadDir)); // uploaded product images
+// quick check that the API is alive: open the server's address in a browser
+app.get('/', (req, res) => res.json({ status: 'ok', message: 'Shopio API is running' }));
+
+// local development only (Vercel ignores static file serving; uploads go to Vercel Blob there)
+app.use('/api/uploads', express.static(uploadDir));
+
+// Connect to MongoDB when needed and reuse the connection between requests.
+let connecting = null;
+async function ensureDb() {
+  if (mongoose.connection.readyState === 1) return true;
+  if (!connecting) {
+    connecting = mongoose
+      .connect(process.env.MONGO_URI, { serverSelectionTimeoutMS: 5000 })
+      .then(() => { backfillRatings().catch(() => {}); return true; })
+      .catch((e) => { console.error('DB connection failed:', e.message); return false; })
+      .finally(() => { connecting = null; });
+  }
+  return connecting;
+}
 
 // While the database is down, answer 503 so the website switches itself to demo mode.
-app.use('/api', (req, res, next) => {
-  if (mongoose.connection.readyState === 1) return next();
+app.use('/api', async (req, res, next) => {
+  if (await ensureDb()) return next();
   res.status(503).json({ message: 'Database unavailable', demo: true });
 });
 
@@ -36,28 +54,19 @@ app.use((err, req, res, next) => {
   res.status(err.status || 500).json({ message: err.message || 'Server error' });
 });
 
-// Give every product that has no rating yet a random 3-5 star rating (runs once per product).
+// Give every product that has no rating yet a random 3-5 star rating (once per product).
 async function backfillRatings() {
   const missing = await Product.find({ $or: [{ rating: { $exists: false } }, { numReviews: { $exists: false } }] }).select('_id');
   for (const { _id } of missing) {
     await Product.updateOne({ _id }, { $set: { rating: randomRating(), numReviews: randomReviews() } });
   }
-  if (missing.length) console.log(`Added ratings to ${missing.length} products`);
 }
 
-// The server keeps running even if the database is unreachable, and keeps retrying.
-async function connectWithRetry() {
-  try {
-    await mongoose.connect(process.env.MONGO_URI, { serverSelectionTimeoutMS: 5000 });
-    console.log('MongoDB connected');
-    await backfillRatings();
-  } catch (e) {
-    console.error('DB connection failed (the website will use demo mode):', e.message);
-    setTimeout(connectWithRetry, 10000);
-  }
+// On your own computer we start a normal server. On Vercel the exported app is used instead.
+if (!process.env.VERCEL) {
+  const PORT = process.env.PORT || 5000;
+  app.listen(PORT, () => console.log(`API running on port ${PORT}`));
+  ensureDb().then((ok) => console.log(ok ? 'MongoDB connected' : 'Database unreachable: the website will use demo mode'));
 }
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`API running on port ${PORT}`));
-console.log("MONGO_URI available:", Boolean(process.env.MONGO_URI));
-connectWithRetry();
+export default app;
