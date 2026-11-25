@@ -1,5 +1,9 @@
 import { demo, demoApi } from './demo.js';
 
+// Address of the backend. Empty on your computer (Vite forwards /api to port 5000);
+// on Vercel it comes from the VITE_API_URL setting.
+export const API_URL = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+
 // Calls the API. If the server/database can't be reached, demo mode switches on automatically.
 export async function api(path, opts = {}) {
   if (demo.active) return demoApi(path, opts);
@@ -9,7 +13,7 @@ export async function api(path, opts = {}) {
   let res;
   let data;
   try {
-    res = await fetch(`/api${path}`, {
+    res = await fetch(`${API_URL}/api${path}`, {
       method,
       headers: {
         'Content-Type': 'application/json',
@@ -41,7 +45,7 @@ export async function uploadImage(file) {
   let res;
   let data;
   try {
-    res = await fetch('/api/upload', {
+    res = await fetch(`${API_URL}/api/upload`, {
       method: 'POST',
       headers: user?.token ? { Authorization: `Bearer ${user.token}` } : {},
       body: fd,

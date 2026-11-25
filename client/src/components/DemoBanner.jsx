@@ -1,5 +1,6 @@
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import { demo } from '../demo.js';
+import { API_URL } from '../api.js';
 import { toast } from '../toast.js';
 
 // Shows a popup when demo mode switches on, plus a small "Demo mode" tag that reopens it.
@@ -13,7 +14,7 @@ export default function DemoBanner() {
 
   const retry = async () => {
     try {
-      const r = await fetch('/api/products');
+      const r = await fetch(`${API_URL}/api/products`);
       if (r.ok) return window.location.reload();
     } catch { /* still down */ }
     toast('The database is still unavailable', 'error');
