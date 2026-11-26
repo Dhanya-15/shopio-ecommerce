@@ -5,17 +5,17 @@ import HashLink from '../components/HashLink.jsx';
 import ProductCard from '../components/ProductCard.jsx';
 
 // Replace these with your own photos (put files in client/public and use '/hero.jpg' etc.)
-const HERO_IMG = 'public/hero.png';
-const PROMO_BAG = 'public/handbag_banner1.png';
-const PROMO_SUN = 'public/sunglasses_banner1.png';
+const HERO_IMG = '/hero.png';
+const PROMO_BAG = '/handbag_banner1.png';
+const PROMO_SUN = '/sunglasses_banner1.png';
 
 const CATEGORIES = [
-  { name: 'Men',         img: 'public/men.jpg' },
-  { name: 'Women',       img: 'public/women.jpg' },
-  { name: 'Shoes',       img: 'public/shoes.jpg' },
-  { name: 'Bags',        img: 'public/bags.jpg' },
-  { name: 'Watches',     img: 'public/watches.jpg' },
-  { name: 'Accessories', img: 'public/accessories.jpg' },
+  { name: 'Men',         img: '/men.jpg' },
+  { name: 'Women',       img: '/women.jpg' },
+  { name: 'Shoes',       img: '/shoes.jpg' },
+  { name: 'Bags',        img: '/bags.jpg' },
+  { name: 'Watches',     img: '/watches.jpg' },
+  { name: 'Accessories', img: '/accessories.jpg' },
 ];
 
 const FEATURES = [
