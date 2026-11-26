@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react';
-import { Link, useLocation, useSearchParams } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { api } from '../api.js';
 import HashLink from '../components/HashLink.jsx';
 import ProductCard from '../components/ProductCard.jsx';
 
-// Replace these with your own photos (put files in client/public and use '/hero.jpg' etc.)
+// Pictures live in client/public (the link starts with / and has no "public")
 const HERO_IMG = '/hero.png';
 const PROMO_BAG = '/handbag_banner1.png';
 const PROMO_SUN = '/sunglasses_banner1.png';
@@ -25,8 +25,6 @@ const FEATURES = [
 ];
 
 export default function Home() {
-  const [params] = useSearchParams();
-  const q = params.get('q') || '';
   const { hash } = useLocation();
 
   const [products, setProducts] = useState([]);
@@ -34,25 +32,36 @@ export default function Home() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    setLoading(true);
-    api(`/products${q ? `?search=${encodeURIComponent(q)}` : ''}`)
+    api('/products')
       .then((d) => { setProducts(d); setError(''); })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
-  }, [q]);
+  }, []);
 
   // when arriving from another page (e.g. /#shop), scroll once the content has loaded
   useEffect(() => {
     if (hash && !loading) document.getElementById(hash.slice(1))?.scrollIntoView({ behavior: 'smooth' });
   }, [hash, loading]);
 
+  // Trending = the 5 newest products
   const trending = products.slice(0, 5);
+
+  // "All Products" preview = 5 random products that are NOT in the trending row (picked once per page load)
+  const picks = useMemo(() => {
+    const rest = products.slice(5);
+    for (let i = rest.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [rest[i], rest[j]] = [rest[j], rest[i]];
+    }
+    return rest.slice(0, 5);
+  }, [products]);
+
   const countOf = (c) => products.filter((p) => p.category === c).length;
 
   return (
     <>
       {/* HERO */}
-      <section className="hero">
+      <section id="home" className="hero">
         <img className="hero-img" src={HERO_IMG} alt="" />
         <div className="hero-text">
           <span className="pill">NEW COLLECTION 2022</span>
@@ -108,28 +117,27 @@ export default function Home() {
       {error && <p className="error">{error}</p>}
 
       {/* TRENDING PRODUCTS (New Arrivals) */}
-      {!q && (
-        <section id="trending">
-          <div className="section-head">
-            <h2>Trending Products</h2>
-            <HashLink id="shop" className="text-btn">View All →</HashLink>
+      <section id="trending">
+        <div className="section-head">
+          <h2>Trending Products</h2>
+          <Link to="/products" className="text-btn">View All →</Link>
+        </div>
+        {loading ? <p>Loading...</p> : trending.length === 0 ? <p>No products yet.</p> : (
+          <div className="products">
+            {trending.map((p) => <ProductCard key={p._id} p={p} />)}
           </div>
-          {loading ? <p>Loading...</p> : trending.length === 0 ? <p>No products yet.</p> : (
-            <div className="products">
-              {trending.map((p) => <ProductCard key={p._id} p={p} />)}
-            </div>
-          )}
-        </section>
-      )}
+        )}
+      </section>
 
-      {/* SHOP: FULL PRODUCT LIST */}
+      {/* ALL PRODUCTS: 5 random picks that are not in the trending row */}
       <section id="shop">
         <div className="section-head">
-          <h2>{q ? `Results for “${q}”` : 'All Products'}</h2>
+          <h2>All Products</h2>
+          <Link to="/products" className="text-btn">View All →</Link>
         </div>
-        {loading ? <p>Loading...</p> : products.length === 0 ? <p>No products found.</p> : (
+        {loading ? <p>Loading...</p> : picks.length === 0 ? <p>No more products yet.</p> : (
           <div className="products">
-            {products.map((p) => <ProductCard key={p._id} p={p} />)}
+            {picks.map((p) => <ProductCard key={p._id} p={p} />)}
           </div>
         )}
       </section>

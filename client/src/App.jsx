@@ -3,6 +3,7 @@ import Navbar from './components/Navbar.jsx';
 import DemoBanner from './components/DemoBanner.jsx';
 import Toaster from './components/Toaster.jsx';
 import Home from './pages/Home.jsx';
+import AllProducts from './pages/AllProducts.jsx';
 import Category from './pages/Category.jsx';
 import ProductPage from './pages/ProductPage.jsx';
 import Cart from './pages/Cart.jsx';
@@ -24,6 +25,7 @@ export default function App() {
       <main className={bare ? '' : 'container'}>
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/products" element={<AllProducts />} />
           <Route path="/category/:slug" element={<Category />} />
           <Route path="/product/:id" element={<ProductPage />} />
           <Route path="/cart" element={<Cart />} />

@@ -58,7 +58,7 @@ export default function Navbar() {
 
   const search = (e) => {
     e.preventDefault();
-    navigate(q ? `/?q=${encodeURIComponent(q)}#shop` : '/#shop');
+    navigate(q ? `/products?q=${encodeURIComponent(q)}` : '/products');
     setOpen(false);
   };
 
@@ -77,8 +77,8 @@ export default function Navbar() {
           <span className="topbar-right">
             <Link to="/support">Help &amp; Support</Link>
             <Link to="/track">Track Order</Link>
-            <span>USD ⌄</span>
-            <span>EN ⌄</span>
+            <span>USD</span>
+            <span>EN</span>
           </span>
         </div>
       </div>
@@ -92,16 +92,6 @@ export default function Navbar() {
           <HashLink id="categories" className={cls('categories')}>Categories</HashLink>
           <HashLink id="deals" className={cls('deals')}>Deals</HashLink>
           <HashLink id="trending" className={cls('trending')}>New Arrivals</HashLink>
-          <span className="dropdown">
-            <span>Pages ⌄</span>
-            <div className="dropdown-menu">
-              <Link to="/cart">Cart</Link>
-              <Link to="/wishlist">Wishlist</Link>
-              <Link to="/orders">My Orders</Link>
-              <Link to="/track">Track Order</Link>
-              <Link to="/support">Help &amp; Support</Link>
-            </div>
-          </span>
         </nav>
 
         <div className="icons">
