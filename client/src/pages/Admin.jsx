@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext.jsx';
 
 const CATEGORIES = ['Men', 'Women', 'Shoes', 'Bags', 'Watches', 'Accessories'];
 const GENDERED = ['Shoes', 'Bags', 'Watches']; // these also need Men / Women
+const PER_CATEGORY = 5; // products shown per category before "View all"
 const empty = { name: '', description: '', price: '', category: '', gender: '', countInStock: '' };
 
 export default function Admin() {
@@ -13,6 +14,7 @@ export default function Admin() {
   const [file, setFile] = useState(null);
   const [fileKey, setFileKey] = useState(0); // changing this clears the file input
   const [editingId, setEditingId] = useState(null);
+  const [expanded, setExpanded] = useState({}); // which categories are showing every product
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
 
@@ -78,6 +80,8 @@ export default function Admin() {
     load();
   };
 
+  const toggle = (name) => setExpanded((prev) => ({ ...prev, [name]: !prev[name] }));
+
   // group products by category (fixed order first, then any older/other categories)
   const others = [...new Set(products.map((p) => p.category))].filter((c) => !CATEGORIES.includes(c));
   const groups = [...CATEGORIES, ...others]
@@ -114,26 +118,37 @@ export default function Admin() {
       </form>
 
       {products.length === 0 && <p>No products yet.</p>}
-      {groups.map((g) => (
-        <section key={g.name}>
-          <h2 className="group-title">{g.name} <span>({g.items.length})</span></h2>
-          {g.items.map((p) => (
-            <div className="cart-row" key={p._id}>
-              <img src={p.image} alt="" />
-              <div>
-                <span>{p.name}</span>
-                {p.gender && <small className="size-tag">{p.gender}</small>}
+      {groups.map((g) => {
+        const open = !!expanded[g.name];
+        const visible = open ? g.items : g.items.slice(0, PER_CATEGORY);
+        return (
+          <section key={g.name}>
+            <h2 className="group-title">
+              {g.name} <span>({g.items.length})</span>
+              {g.items.length > PER_CATEGORY && (
+                <button type="button" className="text-btn" style={{ marginLeft: 'auto' }} onClick={() => toggle(g.name)}>
+                  {open ? 'Show less ↑' : 'View all →'}
+                </button>
+              )}
+            </h2>
+            {visible.map((p) => (
+              <div className="cart-row" key={p._id}>
+                <img src={p.image} alt="" />
+                <div>
+                  <span>{p.name}</span>
+                  {p.gender && <small className="size-tag">{p.gender}</small>}
+                </div>
+                <span>{money(p.price)}</span>
+                <span>Stock: {p.countInStock}</span>
+                <div className="row-actions">
+                  <button className="btn-light" onClick={() => startEdit(p)}>Edit</button>
+                  <button className="danger" onClick={() => del(p._id)}>Delete</button>
+                </div>
               </div>
-              <span>{money(p.price)}</span>
-              <span>Stock: {p.countInStock}</span>
-              <div className="row-actions">
-                <button className="btn-light" onClick={() => startEdit(p)}>Edit</button>
-                <button className="danger" onClick={() => del(p._id)}>Delete</button>
-              </div>
-            </div>
-          ))}
-        </section>
-      ))}
+            ))}
+          </section>
+        );
+      })}
     </>
   );
 }
