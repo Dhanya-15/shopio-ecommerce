@@ -114,6 +114,7 @@ export default function Navbar() {
                   <>
                     <div className="profile-name">Hi, {user.name}</div>
                     <Link to="/orders">Orders</Link>
+                    <Link to="/support">Help &amp; Support</Link>
                     {user.isAdmin && <Link to="/admin">Admin</Link>}
                     <button className="menu-item" onClick={() => { logout(); navigate('/'); }}>Logout</button>
                   </>
