@@ -64,7 +64,7 @@ export default function Home() {
       <section id="home" className="hero">
         <img className="hero-img" src={HERO_IMG} alt="" />
         <div className="hero-text">
-          <span className="pill">NEW COLLECTION 2022</span>
+          <span className="pill">NEW COLLECTION 2026</span>
           <h1>Elevate Your<br />Everyday Style</h1>
           <p>Discover premium quality products crafted for comfort, style and performance.</p>
           <div className="row">

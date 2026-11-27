@@ -3,7 +3,8 @@ import { api, money, uploadImage } from '../api.js';
 import { useAuth } from '../context/AuthContext.jsx';
 
 const CATEGORIES = ['Men', 'Women', 'Shoes', 'Bags', 'Watches', 'Accessories'];
-const empty = { name: '', description: '', price: '', category: '', countInStock: '' };
+const GENDERED = ['Shoes', 'Bags', 'Watches']; // these also need Men / Women
+const empty = { name: '', description: '', price: '', category: '', gender: '', countInStock: '' };
 
 export default function Admin() {
   const { user } = useAuth();
@@ -22,6 +23,12 @@ export default function Admin() {
 
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
 
+  // choosing a category: the Men/Women list only stays for Shoes, Bags and Watches
+  const setCategory = (e) => {
+    const category = e.target.value;
+    setForm({ ...form, category, gender: GENDERED.includes(category) ? form.gender : '' });
+  };
+
   const reset = () => {
     setForm(empty);
     setFile(null);
@@ -36,6 +43,7 @@ export default function Admin() {
       description: p.description || '',
       price: String(p.price),
       category: p.category,
+      gender: p.gender || '',
       countInStock: String(p.countInStock),
     });
     setFile(null);
@@ -89,10 +97,17 @@ export default function Admin() {
         <input required type="number" step="0.01" min="0" placeholder="Price" value={form.price} onChange={set('price')} />
         <input key={fileKey} required={!editingId} type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={(e) => setFile(e.target.files[0] || null)} />
         {editingId && <small className="hint">Editing a product: leave the image empty to keep the current one.</small>}
-        <select required value={form.category} onChange={set('category')}>
+        <select required value={form.category} onChange={setCategory}>
           <option value="" disabled>Select category</option>
           {categoryOptions.map((c) => <option key={c} value={c}>{c}</option>)}
         </select>
+        {GENDERED.includes(form.category) && (
+          <select required value={form.gender} onChange={set('gender')}>
+            <option value="" disabled>Select Men or Women</option>
+            <option value="Men">Men</option>
+            <option value="Women">Women</option>
+          </select>
+        )}
         <input required type="number" min="0" placeholder="Stock" value={form.countInStock} onChange={set('countInStock')} />
         <button>{editingId ? 'Update product' : 'Add product'}</button>
         {editingId && <button type="button" className="btn-light" onClick={reset}>Cancel</button>}
@@ -105,7 +120,10 @@ export default function Admin() {
           {g.items.map((p) => (
             <div className="cart-row" key={p._id}>
               <img src={p.image} alt="" />
-              <span>{p.name}</span>
+              <div>
+                <span>{p.name}</span>
+                {p.gender && <small className="size-tag">{p.gender}</small>}
+              </div>
               <span>{money(p.price)}</span>
               <span>Stock: {p.countInStock}</span>
               <div className="row-actions">

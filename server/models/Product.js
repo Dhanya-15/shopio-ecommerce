@@ -10,6 +10,8 @@ const productSchema = new mongoose.Schema({
   price: { type: Number, required: true, min: 0 },
   image: { type: String, default: '' },
   category: { type: String, default: 'General' },
+  // only used by Shoes, Bags and Watches: who the product is for
+  gender: { type: String, enum: ['', 'Men', 'Women'], default: '' },
   countInStock: { type: Number, required: true, min: 0, default: 0 },
   rating: { type: Number, min: 0, max: 5, default: randomRating },
   numReviews: { type: Number, default: randomReviews },

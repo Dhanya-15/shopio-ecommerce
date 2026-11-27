@@ -12,6 +12,7 @@ const rand = (a, b) => Math.floor(Math.random() * (b - a + 1)) + a;
 const pick = (arr) => arr[rand(0, arr.length - 1)];
 const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 const SIZED = ['Shoes', 'Women'];
+const GENDERED = ['Shoes', 'Bags', 'Watches'];
 
 const CATALOG = {
   Men: ['Linen Button-Up Shirt', 'Slim Fit Chinos', 'Classic Denim Jacket', 'Cotton Polo Shirt'],
@@ -30,12 +31,13 @@ const wish = new Set();
 function build() {
   let n = 0;
   products = [];
-  Object.entries(CATALOG).forEach(([category, names]) => names.forEach((name) => {
+  Object.entries(CATALOG).forEach(([category, names]) => names.forEach((name, idx) => {
     n += 1;
     products.push({
       _id: `demo-p${n}`,
       name,
       category,
+      gender: GENDERED.includes(category) ? (idx % 2 ? 'Women' : 'Men') : '',
       description: `A customer favourite from our ${category} collection. Quality materials and a comfortable fit.`,
       price: Number((rand(20, 180) + pick([0, 0.5, 0.99])).toFixed(2)),
       image: `https://picsum.photos/seed/demo-${n}-${name.replace(/\s+/g, '')}/600/660`,
